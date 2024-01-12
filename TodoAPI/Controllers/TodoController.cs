@@ -24,7 +24,7 @@ namespace TodoAPI.Controllers
         public async Task<ActionResult<List<Todo>>> getAll() 
         
         {
-           var todos = await _connection.QueryAsync<Todo>("SELECT TOP (200) Id, Title,Description, Status,CreatedOn,CreatedBy,ModifiedOn,ModifiedBy FROM HDB.dbo.Todos");
+           var todos = await _connection.QueryAsync<Todo>("SELECT TOP (200) Id, Title,Description, Status,CreatedOn,CreatedBy,ModifiedOn,ModifiedBy FROM HDB.dbo.Todos ORDER BY Id DESC");
             return Ok(todos);
         }
 
