@@ -1,4 +1,5 @@
 ﻿using Dapper;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using System.Data.SqlClient;
 using TodoAPI.Models;
@@ -15,6 +16,7 @@ namespace TodoAPI.Controllers
         {
             _config = config;
             _connection = new SqlConnection(_config.GetConnectionString("ApplicationSettingDb"));
+             
         }
 
         // Get all data
@@ -22,7 +24,7 @@ namespace TodoAPI.Controllers
         public async Task<ActionResult<List<Todo>>> getAll() 
         
         {
-            var todos = await _connection.QueryAsync<Todo>("SELECT TOP (200) Id, Title,Description, Status,CreatedOn,CreatedBy,ModifiedOn,ModifiedBy FROM HDB.dbo.Todos");
+           var todos = await _connection.QueryAsync<Todo>("SELECT TOP (200) Id, Title,Description, Status,CreatedOn,CreatedBy,ModifiedOn,ModifiedBy FROM HDB.dbo.Todos");
             return Ok(todos);
         }
 
@@ -35,7 +37,8 @@ namespace TodoAPI.Controllers
 
             if (todo.Status != "pending" && todo.Status != "doing" && todo.Status != "done")
                 return BadRequest("Status must be either 'pending', 'doing', or 'done'.");
-
+            todo.CreatedOn = DateTime.Now;
+            todo.ModifiedOn = DateTime.Now;
             var response = await _connection.ExecuteAsync(@"INSERT INTO HDB.dbo.Todos (Title, Description, Status,createdOn,CreatedBy,ModifiedOn,ModifiedBy) 
                                                       VALUES (@Title, @Description, @Status, @createdOn,@CreatedBy,@ModifiedOn, @ModifiedBy)",
                                                               todo);
@@ -66,6 +69,7 @@ namespace TodoAPI.Controllers
         {
             if (todo.Status != "pending" && todo.Status != "doing" && todo.Status != "done")
                 return BadRequest("Status must be either 'pending', 'doing', or 'done'.");
+            todo.ModifiedOn = DateTime.Now;
 
             await _connection.ExecuteAsync(@$"UPDATE HDB.dbo.Todos SET Title = @Title, Description = @Description, Status = @Status, ModifiedBy = @ModifiedBy,  ModifiedOn = @ModifiedOn WHERE Id = {id}",
                                                         new
@@ -85,7 +89,7 @@ namespace TodoAPI.Controllers
         {
             if (todo.Status != "pending" && todo.Status != "doing" && todo.Status != "done")
                 return BadRequest("Status must be either 'pending', 'doing', or 'done'.");
-
+            todo.ModifiedOn = DateTime.Now;
             await _connection.ExecuteAsync(@$"UPDATE HDB.dbo.Todos SET Status = @Status, ModifiedOn = @ModifiedOn, ModifiedBy = @ModifiedBy WHERE Id = {id}",
                                                         new
                                                         {
