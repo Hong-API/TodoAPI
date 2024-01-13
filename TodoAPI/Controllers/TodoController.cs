@@ -1,5 +1,4 @@
 ﻿using Dapper;
-using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using System.Data.SqlClient;
 using TodoAPI.Models;
@@ -33,14 +32,14 @@ namespace TodoAPI.Controllers
         public async Task<ActionResult> createTodo(Todo todo)
         {
             if (todo == null)
-                return BadRequest();
+                return BadRequest("Please input all require fields");
 
             if (todo.Status != "pending" && todo.Status != "doing" && todo.Status != "done")
                 return BadRequest("Status must be either 'pending', 'doing', or 'done'.");
             todo.CreatedOn = DateTime.Now;
             todo.ModifiedOn = DateTime.Now;
             var response = await _connection.ExecuteAsync(@"INSERT INTO HDB.dbo.Todos (Title, Description, Status,createdOn,CreatedBy,ModifiedOn,ModifiedBy) 
-                                                      VALUES (@Title, @Description, @Status, @createdOn,@CreatedBy,@ModifiedOn, @ModifiedBy)",
+                                                      VALUES (@Title, @Description, @Status, @createdOn,@CreatedBy,@ModifiedOn, @CreatedBy)",
                                                               todo);
             if (response == 0)
                 return StatusCode(500);
@@ -71,15 +70,18 @@ namespace TodoAPI.Controllers
                 return BadRequest("Status must be either 'pending', 'doing', or 'done'.");
             todo.ModifiedOn = DateTime.Now;
 
-            await _connection.ExecuteAsync(@$"UPDATE HDB.dbo.Todos SET Title = @Title, Description = @Description, Status = @Status, ModifiedBy = @ModifiedBy,  ModifiedOn = @ModifiedOn WHERE Id = {id}",
-                                                        new
-                                                        {
-                                                            todo.Title,
-                                                            todo.Description,
-                                                            todo.Status,
-                                                            todo.ModifiedBy,
-                                                            todo.ModifiedOn
-                                                        });
+            await _connection.ExecuteAsync(
+                    @$"UPDATE HDB.dbo.Todos 
+                    SET Title = @Title, Description = @Description, Status = @Status, ModifiedBy = @ModifiedBy,  ModifiedOn = @ModifiedOn 
+                    WHERE Id = {id}",
+                    new
+                    {
+                        todo.Title,
+                        todo.Description,
+                        todo.Status,
+                        todo.ModifiedBy,
+                        todo.ModifiedOn
+                    });
              return Ok("Updated task successfully");
         }
 
